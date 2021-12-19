@@ -15,8 +15,8 @@ exports.getAllProduct = catchAsyncErrors(async (req, res) => {
     .filter()
     .pagination(productPerPage);
 
-    // total products
-    const productCount = await Product.countDocuments();
+  // total products
+  const productCount = await Product.countDocuments();
 
   // so here we'll get the products based on query,if there's no query we'll get all products.But i need to clear this topic must
   const products = await apiFeature.query;
@@ -24,7 +24,7 @@ exports.getAllProduct = catchAsyncErrors(async (req, res) => {
   res.status(200).json({
     success: true,
     products,
-    productCount
+    productCount,
   });
 });
 
@@ -43,7 +43,7 @@ exports.getProductDetails = catchAsyncErrors(async (req, res, next) => {
 // Create A Product--Admin
 exports.createProduct = catchAsyncErrors(async (req, res) => {
   const product = await Product.create(req.body);
-  res.status(200).json({
+  res.status(201).json({
     success: true,
     product,
   });
