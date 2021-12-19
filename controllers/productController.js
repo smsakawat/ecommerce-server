@@ -8,12 +8,23 @@ const ApiFeatures = require("../utils/apiFeatures");
 
 // Get All Products
 exports.getAllProduct = catchAsyncErrors(async (req, res) => {
-  const apiFeature = new ApiFeatures(Product.find(), req.query).search();
+  const productPerPage = 6;
+  // here the search is case-insensitive,but filter is case sensitive
+  const apiFeature = new ApiFeatures(Product.find(), req.query)
+    .search()
+    .filter()
+    .pagination(productPerPage);
+
+    // total products
+    const productCount = await Product.countDocuments();
+
+  // so here we'll get the products based on query,if there's no query we'll get all products.But i need to clear this topic must
   const products = await apiFeature.query;
 
   res.status(200).json({
     success: true,
     products,
+    productCount
   });
 });
 
