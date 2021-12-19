@@ -1,4 +1,5 @@
 const Product = require("../models/productModel");
+const ErrorHandler = require("../utils/errorHandler");
 
 // Get All Products
 exports.getAllProduct = async (req, res) => {
@@ -13,10 +14,7 @@ exports.getAllProduct = async (req, res) => {
 exports.getProductDetails = async (req, res, next) => {
   const product = await Product.findById(req.params.id);
   if (!product) {
-    return res.status(500).json({
-      success: false,
-      message: "Product not found",
-    });
+    return next(new ErrorHandler("Product not found", 400));
   }
 
   res.status(200).json({
@@ -38,10 +36,7 @@ exports.updateProduct = async (req, res) => {
   let product = await Product.findById(req.params.id);
   //   It's good to check first that the product is in DB or not..
   if (!product) {
-    return res.status(500).json({
-      success: false,
-      message: "Product not found",
-    });
+    return next(new ErrorHandler("Product not found", 400));
   }
   product = await Product.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
@@ -58,10 +53,7 @@ exports.updateProduct = async (req, res) => {
 exports.deleteProduct = async (req, res, next) => {
   const product = await Product.findById(req.params.id);
   if (!product) {
-    return res.status(500).json({
-      success: false,
-      message: "Product not found",
-    });
+    return next(new ErrorHandler("Product not found", 400));
   }
   await product.remove();
   res.status(200).json({
