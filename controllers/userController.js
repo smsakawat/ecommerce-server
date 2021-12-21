@@ -4,6 +4,7 @@ const ErrorHandler = require("../utils/errorHandler");
 const sendEmail = require("../utils/sendEmail");
 const sendToken = require("../utils/jwtToken");
 const crypto = require("crypto");
+const bcrypt = require("bcryptjs");
 
 // Register User
 exports.registerUser = catchAsyncErrors(async (req, res, next) => {
@@ -23,7 +24,7 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
 
 // Login User
 exports.loginUser = catchAsyncErrors(async (req, res, next) => {
-  const { email, password } = req.body;
+  let { email, password } = req.body;
   if (!email || !password) {
     return next(new ErrorHandler("Plase Enter Email & Password"), 401);
   }
@@ -32,10 +33,11 @@ exports.loginUser = catchAsyncErrors(async (req, res, next) => {
   if (!user) {
     return next(new ErrorHandler("Invalid Email or Password", 401));
   }
-  const isPasswordMatched = user.comparePassword();
 
+  const isPasswordMatched = await user.comparePassword(password);
+  // console.log(isPasswordMatched);
   if (!isPasswordMatched) {
-    return next(new ErrorHandler("Invalid Email or Password", 401));
+    return next(new ErrorHandler("Invalid email or password", 401));
   }
 
   sendToken(user, 200, res);
@@ -60,7 +62,7 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
   // console.log(user);
 
   if (!user) {
-    return next(new ErrorHandler("User not found", 404));
+    return next(new ErrorHandler("User not found", 400));
   }
 
   // Get Password Token
@@ -104,7 +106,6 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
     resetPasswordToken,
     resetPasswordExpire: { $gt: Date.now() },
   });
-  console.log(user._id);
 
   if (!user) {
     return next(
@@ -113,14 +114,94 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
   }
 
   if (req.body.password !== req.body.confirmPassword) {
-    return next(new ErrorHandler("password fields didn't match", 400));
+    return next(new ErrorHandler("Password doesn't match", 400));
   }
   user.password = req.body.password;
   user.resetPasswordToken = undefined;
   user.resetPasswordExpire = undefined;
   await user.save();
-  console.log(user._id);
+
   sendToken(user, 200, res);
 });
 
-// So it's a lot work right..let's go do some chills
+// Get User Details
+
+exports.getUserDetails = catchAsyncErrors(async (req, res, next) => {
+  // we can use both id and _id,but i'll use _id to find documents..sometimes the use case can be different tho
+  // console.log(req.user.id);
+  // console.log(req.user._id);
+  const user = await User.findById(req.user.id);
+  if (!user) return;
+  res.status(200).json({
+    success: true,
+    user,
+  });
+});
+
+// Update Password
+exports.updatePassword = catchAsyncErrors(async (req, res, next) => {
+  const user = await User.findById(req.user.id).select("+password");
+
+  const isPasswordMatched = await user.comparePassword(req.body.oldPassword);
+  // console.log(isPasswordMatched);
+  if (!isPasswordMatched) {
+    return next(new ErrorHandler("Old password is incorrect,Try again", 400));
+  }
+  if (req.body.newPassword !== req.body.confirmPassword) {
+    return next(new ErrorHandler("Password does not match", 400));
+  }
+  user.password = req.body.newPassword;
+  await user.save();
+
+  sendToken(user, 200, res);
+});
+
+// Update User Profile(name,emai,avatar)
+exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
+  const newUserData = {
+    name: req.body.name,
+    email: req.body.email,
+  };
+  // we will use cloudinary later
+  //  here if name or email comes undefined from client,mongoose automatically keep the prvs one.
+
+  const updatedUserData = await User.findByIdAndUpdate(
+    req.user.id,
+    newUserData,
+    {
+      new: true,
+      runValidators: true,
+      useFindAndModify: false,
+    }
+  );
+  res.status(200).json({
+    success: true,
+    message: "Profile got updated",
+    updatedUserData,
+  });
+});
+
+// Get All Users (admin)
+exports.getAllUsers = catchAsyncErrors(async (req, res, next) => {
+  const users = await User.find();
+
+  res.status(200).json({
+    success: true,
+    users,
+  });
+});
+
+// Get Single User Details (Admin)
+exports.getSingleUser = catchAsyncErrors(async (req, res, next) => {
+  const user = await User.findById(req.params.id);
+  if (!user) {
+    return next(
+      new ErrorHandler(`User does not exist with id: ${req.params.id}`)
+    );
+  }
+
+  res.status(200).json({
+    success: true,
+    user,
+  });
+});
