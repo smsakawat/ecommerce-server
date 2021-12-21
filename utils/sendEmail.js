@@ -5,7 +5,7 @@ const sendEmail = async (options) => {
   const transporter = nodeMailer.createTransport({
     service: process.env.SMTP_SERVICE,
     host: process.env.SMTP_HOST,
-    port:process.env.SMTP_PORT,
+    port: process.env.SMTP_PORT,
 
     auth: {
       user: process.env.SMTP_MAIL,
@@ -17,7 +17,7 @@ const sendEmail = async (options) => {
     from: process.env.SMTP_MAIL,
     to: options.email,
     subject: options.subject,
-    text: "email here",
+    text: options.message,
   };
   await transporter.sendMail(mailOPtions);
 };
