@@ -2,6 +2,8 @@ const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+// crypto is for generating token and this is built in node.js
+const crypto = require("crypto");
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -43,7 +45,7 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpire: Date,
 });
 
-// hashing the password before saving this in db
+// Hashing the password before saving this in db
 userSchema.pre("save", async function (next) {
   // now,we don't want hash the password again while user will update name and email,if password is changed only then we'll change it.
   if (!this.isModified("password")) {
@@ -59,9 +61,26 @@ userSchema.methods.getJWTToken = function () {
   });
 };
 
-// Compre Password
+// Comprae Password
 userSchema.methods.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
+// Generating password reset token
+userSchema.methods.getResetPasswordToken = function () {
+  //  Generating token
+  // crypto.randomByts will give a buffer value so we need to make it string in hex form.
+  const resetToken = crypto.randomBytes(20).toString("hex");
+
+  // Hashing and adding resetPasswordToken to userSchema
+
+  /* here "sha256" is algorithm for hashing by crypto,there are also more algo's like this..and we'll update and digest the resetToken here */
+  this.resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+  this.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
+
+  return resetToken;
+};
 module.exports = mongoose.model("User", userSchema);

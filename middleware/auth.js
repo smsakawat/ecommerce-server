@@ -28,7 +28,8 @@ exports.authorizeRoles = (...roles) => {
     if (!roles.includes(req.user.role)) {
       next(
         new ErrorHandler(
-          `Role :${req.user.role} is  not allowed to access this resourse`
+          `Role :${req.user.role} is  not allowed to access this resourse`,
+          403
         )
       );
     }

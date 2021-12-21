@@ -42,8 +42,9 @@ exports.getProductDetails = catchAsyncErrors(async (req, res, next) => {
 });
 // Create A Product--Admin
 exports.createProduct = catchAsyncErrors(async (req, res) => {
+  // here i setting the user in product,so that later we can find out we added product
   req.body.user = req.user._id;
-  console.log(req.body.user);
+  // console.log(req.body.user);
   const product = await Product.create(req.body);
   res.status(201).json({
     success: true,
