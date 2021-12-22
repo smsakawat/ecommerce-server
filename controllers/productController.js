@@ -74,11 +74,62 @@ exports.updateProduct = catchAsyncErrors(async (req, res, next) => {
 exports.deleteProduct = catchAsyncErrors(async (req, res, next) => {
   const product = await Product.findById(req.params.id);
   if (!product) {
-    return next(new ErrorHandler("Product not found", 404));
+    return next(new ErrorHandler("Product not found", 400));
   }
   await product.remove();
   res.status(200).json({
     success: true,
     message: "Product Deleted Successfully",
+  });
+});
+
+//Create or Update a review and set average ratings
+exports.createProductReview = catchAsyncErrors(async (req, res, next) => {
+  const { rating, comment, productId } = req.body;
+  const review = {
+    user: req.user._id,
+    name: req.user.name,
+    rating,
+    comment,
+  };
+  const product = await Product.findById(productId);
+
+  // Chcecking if the user reviewed this product is past or not..if reviewed then we will update it..otherwise will add a new one.
+  const isReviewed = product.reviews.some(
+    (review) => review.user.toString() === req.user._id.toString()
+  );
+  if (isReviewed) {
+    product.reviews.forEach((review) => {
+      if (review.user.toString() === req.user._id.toString()) {
+        review.rating = Number(rating);
+        review.comment = comment;
+      }
+    });
+  } else {
+    product.reviews.push(review);
+    product.numOfReviews = product.reviews.length;
+  }
+
+  // Get the new average of product
+  let avg = 0;
+  product.reviews.forEach((review) => {
+    avg += review.rating;
+  });
+  product.ratings = avg / product.reviews.length;
+  await product.save({ validateBeforeSave: false });
+  res.status(200).json({
+    success: true,
+    product,
+  });
+});
+
+// Get all reviews of a product
+exports.getAllReviews = catchAsyncErrors(async (req, res, next) => {
+  const product = await Product.findById(req.query.id);
+  if (!product) {
+    return next(new ErrorHandler("Product not found", 404));
+  }
+  res.status(200).json({
+    success: true,
   });
 });
