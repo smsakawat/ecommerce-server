@@ -87,6 +87,7 @@ exports.deleteProduct = catchAsyncErrors(async (req, res, next) => {
 // Get all product reviews
 exports.getAllReviews = catchAsyncErrors(async (req, res, next) => {
   // so here i used params rather than query
+  console.log(req.query);
   const product = await Product.findById(req.params.productId);
 
   if (!product) {
@@ -137,9 +138,10 @@ exports.createProductReview = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-// Delete review
+// Delete Review
 exports.deleteReview = catchAsyncErrors(async (req, res, next) => {
-  const product = new Product.findById(req.params.productId);
+  // so here will recieve two two id in params,one is productId to find the product and the another is the review id we want to delete
+  const product = await Product.findById(req.params.productId);
 
   if (!product) {
     return next(new ErrorHandler("Product not found", 404));
@@ -147,15 +149,15 @@ exports.deleteReview = catchAsyncErrors(async (req, res, next) => {
 
   // updata reviews,ratings and numOfReviews for deleting review from product
   const reviews = product.reviews.filter(
-    (review) => product.review._id.toStirng() !== req.params.id
+    (review) => review._id.toString() !== req.params.id.toString()
   );
 
   let avg = 0;
   reviews.forEach((review) => {
     avg += review.rating;
   });
-  ratings = avg / reviews.length;
-  numOfReview = reviews.length;
+  const ratings = avg / reviews.length;
+  const numOfReviews = reviews.length;
 
   //  updata product after deleting review
   await Product.findByIdAndUpdate(

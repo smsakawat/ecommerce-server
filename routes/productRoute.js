@@ -28,9 +28,8 @@ router.route("/product/:id").get(getProductDetails);
 // Add product review route
 router.route("/product/review").put(isAuthenticatedUser, createProductReview);
 // Get all reviews
-router
-  .route("/product/reviews/:productId")
-  .get(getAllReviews)
-  .delete(deleteReview);
+// I had to use params here ..coz for some reason query is not working here.will find out later
+router.route("/product/reviews/:productId").get(getAllReviews);
+router.route("/product/reviews/:productId/:id").delete(deleteReview);
 
 module.exports = router;
