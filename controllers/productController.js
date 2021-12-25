@@ -7,7 +7,7 @@ const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const ApiFeatures = require("../utils/apiFeatures");
 
 // Get All Products
-exports.getAllProduct = catchAsyncErrors(async (req, res) => {
+exports.getAllProducts = catchAsyncErrors(async (req, res) => {
   const productPerPage = 6;
   // here the search is case-insensitive,but filter is case sensitive
   const apiFeature = new ApiFeatures(Product.find(), req.query)
@@ -15,6 +15,7 @@ exports.getAllProduct = catchAsyncErrors(async (req, res) => {
     .filter()
     .pagination(productPerPage);
 
+  // may be i have to add some changes here later
   // total products
   const productCount = await Product.countDocuments();
 
@@ -83,6 +84,19 @@ exports.deleteProduct = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
+// Get all product reviews
+exports.getAllReviews = catchAsyncErrors(async (req, res, next) => {
+  // so here i used params rather than query
+  const product = await Product.findById(req.params.productId);
+
+  if (!product) {
+    return next(new ErrorHandler("Product not found", 404));
+  }
+  res.status(200).json({
+    success: true,
+    reviews: product.reviews,
+  });
+});
 //Create or Update a review and set average ratings
 exports.createProductReview = catchAsyncErrors(async (req, res, next) => {
   const { rating, comment, productId } = req.body;
@@ -117,19 +131,49 @@ exports.createProductReview = catchAsyncErrors(async (req, res, next) => {
   });
   product.ratings = avg / product.reviews.length;
   await product.save({ validateBeforeSave: false });
-  res.status(200).json({
+  res.status(201).json({
     success: true,
-    product,
+    message: "Thanks for your valuable review",
   });
 });
 
-// Get all reviews of a product
-exports.getAllReviews = catchAsyncErrors(async (req, res, next) => {
-  const product = await Product.findById(req.query.id);
+// Delete review
+exports.deleteReview = catchAsyncErrors(async (req, res, next) => {
+  const product = new Product.findById(req.params.productId);
+
   if (!product) {
     return next(new ErrorHandler("Product not found", 404));
   }
+
+  // updata reviews,ratings and numOfReviews for deleting review from product
+  const reviews = product.reviews.filter(
+    (review) => product.review._id.toStirng() !== req.params.id
+  );
+
+  let avg = 0;
+  reviews.forEach((review) => {
+    avg += review.rating;
+  });
+  ratings = avg / reviews.length;
+  numOfReview = reviews.length;
+
+  //  updata product after deleting review
+  await Product.findByIdAndUpdate(
+    req.params.productId,
+    {
+      ratings,
+      reviews,
+      numOfReviews,
+    },
+    {
+      new: true,
+      runValidators: true,
+      useFindAndModify: false,
+    }
+  );
+
   res.status(200).json({
     success: true,
+    message: "Review deleted succesfully",
   });
 });

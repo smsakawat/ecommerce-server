@@ -1,6 +1,6 @@
 const nodeMailer = require("nodemailer");
 
-const sendEmail = async (options) => {
+const sendEmail = (options) => {
   // let's create a transport to send email
   const transporter = nodeMailer.createTransport({
     service: process.env.SMTP_SERVICE,
@@ -14,12 +14,22 @@ const sendEmail = async (options) => {
   });
 
   const mailOPtions = {
-    from: process.env.SMTP_MAIL,
+    // from: process.env.SMTP_MAIL,
     to: options.email,
     subject: options.subject,
     text: options.message,
   };
-  await transporter.sendMail(mailOPtions);
+  transporter.sendMail(mailOPtions, (err, data) => {
+    if (err) {
+      console.log(err);
+    } else if (data) {
+      // console.log(data);
+      res.status(200).json({
+        success: true,
+        message: `Email sent to ${options.email} successfully with reset token`,
+      });
+    }
+  });
 };
 
 module.exports = sendEmail;

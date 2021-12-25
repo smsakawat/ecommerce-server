@@ -1,17 +1,19 @@
 const express = require("express");
 const {
-  getAllProduct,
+  getAllProducts,
   createProduct,
   updateProduct,
   deleteProduct,
   getProductDetails,
   createProductReview,
+  getAllReviews,
+  deleteReview,
 } = require("../controllers/productController");
 const { isAuthenticatedUser, authorizeRoles } = require("../middleware/auth");
 const router = express.Router();
 
 // ALL Products Route
-router.route("/products").get(getAllProduct);
+router.route("/products").get(getAllProducts);
 // Add new product by admin
 router
   .route("/admin/product/new")
@@ -25,5 +27,10 @@ router
 router.route("/product/:id").get(getProductDetails);
 // Add product review route
 router.route("/product/review").put(isAuthenticatedUser, createProductReview);
+// Get all reviews
+router
+  .route("/product/reviews/:productId")
+  .get(getAllReviews)
+  .delete(deleteReview);
 
 module.exports = router;

@@ -81,13 +81,10 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
       email: user.email,
       subject: "Ecommerce Password Recovery",
       message,
-    });
-
-    res.status(200).json({
-      success: true,
-      message: `Email sent to ${user.email} successfully with reset token`,
+      res,
     });
   } catch (err) {
+    console.log(err.message);
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
     await user.save({ validateBeforeSave: false });
