@@ -9,6 +9,7 @@ const ApiFeatures = require("../utils/apiFeatures");
 // Get All Products
 exports.getAllProducts = catchAsyncErrors(async (req, res, next) => {
   const productsPerPage = 8;
+  const totalProductsCount = await Product.countDocuments();
 
   // I have a little bit confustion here...i need to clear this topic later must
   const apiFeature = new ApiFeatures(Product.find(), req.query)
@@ -17,7 +18,7 @@ exports.getAllProducts = catchAsyncErrors(async (req, res, next) => {
 
   let products = await apiFeature.query;
 
-  let productsCount = products.length;
+  let filteredProductsCount = products.length;
 
   apiFeature.pagination(productsPerPage);
 
@@ -26,7 +27,8 @@ exports.getAllProducts = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({
     success: true,
     products,
-    productsCount,
+    totalProductsCount,
+    filteredProductsCount,
     productsPerPage,
   });
 });
