@@ -7,25 +7,27 @@ const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const ApiFeatures = require("../utils/apiFeatures");
 
 // Get All Products
-exports.getAllProducts = catchAsyncErrors(async (req, res) => {
-  const productPerPage = 6;
-  // here the search is case-insensitive,but filter is case sensitive
+exports.getAllProducts = catchAsyncErrors(async (req, res, next) => {
+  const productsPerPage = 8;
+
+  // I have a little bit confustion here...i need to clear this topic later must
   const apiFeature = new ApiFeatures(Product.find(), req.query)
     .search()
-    .filter()
-    .pagination(productPerPage);
+    .filter();
 
-  // may be i have to add some changes here later
-  // total products
-  const productCount = await Product.countDocuments();
+  let products = await apiFeature.query;
 
-  // so here we'll get the products based on query,if there's no query we'll get all products.But i need to clear this topic must
-  const products = await apiFeature.query;
+  let filteredProductsCount = products.length;
+
+  apiFeature.pagination(productsPerPage);
+
+  products = await apiFeature.query.clone();
 
   res.status(200).json({
     success: true,
     products,
-    productCount,
+    filteredProductsCount,
+    productsPerPage,
   });
 });
 
